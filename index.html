@@ -255,7 +255,7 @@
     <!-- ========================================== -->
     <section id="step3Section" class="hidden glass-card rounded-3xl p-6 text-center transition-all duration-300">
 
-      <!-- SAVING (hanya muncul kalau presensi belum terkonfirmasi saat pre-test selesai) -->
+      <!-- SAVING -->
       <div id="submittingState" class="hidden py-8 flex flex-col items-center">
         <div class="relative w-14 h-14 mb-4">
           <div class="w-14 h-14 rounded-full border-4 border-white/40 border-t-slate-900 animate-spin"></div>
@@ -299,7 +299,6 @@
           </div>
         </div>
 
-        <!-- Hanya muncul kalau server belum sempat konfirmasi -->
         <p id="offlineNote" class="hidden text-[11px] text-amber-900 bg-amber-500/20 border border-amber-600/30 rounded-xl px-3 py-2 mb-4 leading-relaxed">
           Data tersimpan di perangkat dan akan terkirim otomatis. Tetap buka halaman ini sebentar.
         </p>
@@ -317,8 +316,8 @@
 
   </main>
 
-  <!-- SYNC STATUS PILL (Hidden/Sembunyi Permanen) -->
-  <div id="syncPill" class="hidden !hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 glass-card rounded-full px-4 py-2 text-[11px] font-semibold text-slate-800 flex items-center gap-2 max-w-[90vw]">
+  <!-- SYNC STATUS PILL (VISUAL DISEMBUNYIKAN SEPENUHNYA VIA STYLE 'hidden !important', TAPI LOGIKA JS TETAP JALAN FULL) -->
+  <div id="syncPill" class="!hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 glass-card rounded-full px-4 py-2 text-[11px] font-semibold text-slate-800 flex items-center gap-2 max-w-[90vw]">
     <span id="syncDot" class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
     <span id="syncText">-</span>
   </div>
@@ -327,7 +326,7 @@
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/library/d/1HAiFxxOuZcEUPFXH5eaRfr_sJQxDQzLFzgPTAHaqcRnU_c8OwHOmM9I5/2';
     const EVENT_NAME = 'Kuliah Tamu: Pengembangan Bioenergi & Infrastruktur EBT';
 
-    // SOAL PRE-TEST (kunci jawaban ada di server / Code.gs)
+    // SOAL PRE-TEST
     const PRETEST = [
       {
         q: 'Dalam upaya transisi menuju Energi Terbarukan (EBT), Indonesia memiliki potensi bioenergi yang sangat melimpah. Manakah dari opsi berikut yang menjadi sumber utama pemanfaatan bioenergi paling dominan di Indonesia saat ini?',
@@ -438,11 +437,13 @@
     const syncText = document.getElementById('syncText');
 
     // ==========================================
-    // QUEUE & BACKGROUND UPLOAD
+    // QUEUE & BACKGROUND UPLOAD (LOGIKA DIJALANKAN 100% UTUH)
     // ==========================================
     const QUEUE_KEY = 'antrianPresensi';
     const MAX_ATTEMPTS = 10;
     let flushing = false;
+    let pillTimer = null;
+    let suppressPill = false;
 
     function getQueue() {
       try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); }
@@ -468,9 +469,20 @@
       return getQueue().some(item => item.id === id);
     }
 
-    // Fungsi pill dinonaktifkan total agar kartu tidak muncul di UI
-    function showPill(state, text) { return; }
-    function hidePill() { return; }
+    // Fungsi update state internal berjalan normal di background, tanpa merubah CSS elemen yang tersembunyi
+    function showPill(state, text) {
+      if (suppressPill) return;
+      clearTimeout(pillTimer);
+      if (syncText) syncText.textContent = text;
+      if (syncDot) {
+        syncDot.className = 'w-2 h-2 rounded-full shrink-0 ' +
+          (state === 'ok' ? 'bg-emerald-600' : state === 'warn' ? 'bg-red-500' : 'bg-amber-500 animate-pulse');
+      }
+    }
+
+    function hidePill() {
+      clearTimeout(pillTimer);
+    }
 
     async function kirim(item) {
       const controller = new AbortController();
@@ -495,6 +507,7 @@
       if (getQueue().length === 0) return;
       flushing = true;
       const failedNrps = new Set();
+      let gagal = false;
 
       try {
         while (true) {
@@ -503,11 +516,13 @@
           );
           if (!item) break;
 
+          showPill('sending', 'Menyimpan data ke server...');
           try {
             await kirim(item);
             removeFromQueue(item.id);
           } catch (err) {
             console.warn('Kirim gagal, akan dicoba lagi:', err);
+            gagal = true;
             if (err && (err.name === 'TypeError' || err.name === 'AbortError')) {
               break; 
             }
@@ -517,6 +532,13 @@
         }
       } finally {
         flushing = false;
+      }
+
+      const sisa = getQueue().length;
+      if (sisa > 0 && gagal) {
+        showPill('warn', sisa + ' data belum terkirim, mencoba lagi...');
+      } else if (sisa === 0) {
+        showPill('ok', 'Data tersimpan di server');
       }
     }
 
@@ -723,7 +745,9 @@
 
       stopCamera();
 
-      // Upload jalan di background tanpa menampilkan status pill
+      // Upload tetap jalan full di background
+      suppressPill = true;
+      hidePill();
       flushQueue();
 
       step2Section.classList.add('hidden');
@@ -827,6 +851,7 @@
       submittingState.classList.add('hidden');
       successState.classList.remove('hidden');
 
+      suppressPill = false;
       flushQueue();
     }
 
