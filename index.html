@@ -255,7 +255,7 @@
     <!-- ========================================== -->
     <section id="step3Section" class="hidden glass-card rounded-3xl p-6 text-center transition-all duration-300">
 
-      <!-- SAVING -->
+      <!-- SAVING (Muncul hanya jika upload foto belum selesai pas Pre-test beres) -->
       <div id="submittingState" class="hidden py-8 flex flex-col items-center">
         <div class="relative w-14 h-14 mb-4">
           <div class="w-14 h-14 rounded-full border-4 border-white/40 border-t-slate-900 animate-spin"></div>
@@ -299,10 +299,6 @@
           </div>
         </div>
 
-        <p id="offlineNote" class="hidden text-[11px] text-amber-900 bg-amber-500/20 border border-amber-600/30 rounded-xl px-3 py-2 mb-4 leading-relaxed">
-          Data tersimpan di perangkat dan akan terkirim otomatis. Tetap buka halaman ini sebentar.
-        </p>
-
         <button 
           type="button" 
           id="btnNewAttendance" 
@@ -316,13 +312,8 @@
 
   </main>
 
-  <!-- SYNC STATUS PILL (VISUAL DISEMBUNYIKAN SEPENUHNYA VIA STYLE 'hidden !important', TAPI LOGIKA JS TETAP JALAN FULL) -->
-  <div id="syncPill" class="!hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 glass-card rounded-full px-4 py-2 text-[11px] font-semibold text-slate-800 flex items-center gap-2 max-w-[90vw]">
-    <span id="syncDot" class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
-    <span id="syncText">-</span>
-  </div>
-
   <script>
+    // PASTE WEB APP URL KAMU DI SINI (Wajib akhiran /exec)
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJojW5Vz9IsptjTWuUEqLYtUpfMXU5UXa1Y_jBAfxcjmSXhlYGrbEAozqzf1X_zruBkw/exec';
     const EVENT_NAME = 'Kuliah Tamu: Pengembangan Bioenergi & Infrastruktur EBT';
 
@@ -378,12 +369,11 @@
     let cameraStream = null;
     let compressedPhotoBase64 = null;
 
-    // State pre-test
+    // State pre-test & promise upload
     let pretestIndex = 0;
     let pretestAnswers = [];
     let pretestSelected = null;
-    let pretestActive = false;
-    let currentPresensiId = null;
+    let uploadPromise = null;
     let presensiTimeString = '';
 
     // DOM ELEMENTS
@@ -426,147 +416,12 @@
 
     const submittingState = document.getElementById('submittingState');
     const successState = document.getElementById('successState');
-    const offlineNote = document.getElementById('offlineNote');
     const receiptName = document.getElementById('receiptName');
     const receiptNrp = document.getElementById('receiptNrp');
     const receiptTimestamp = document.getElementById('receiptTimestamp');
     const btnNewAttendance = document.getElementById('btnNewAttendance');
 
-    const syncPill = document.getElementById('syncPill');
-    const syncDot = document.getElementById('syncDot');
-    const syncText = document.getElementById('syncText');
-
-    // ==========================================
-    // QUEUE & BACKGROUND UPLOAD (LOGIKA DIJALANKAN 100% UTUH)
-    // ==========================================
-    const QUEUE_KEY = 'antrianPresensi';
-    const MAX_ATTEMPTS = 10;
-    let flushing = false;
-    let pillTimer = null;
-    let suppressPill = false;
-
-    function getQueue() {
-      try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); }
-      catch (e) { return []; }
-    }
-
-    function setQueue(q) {
-      try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); return true; }
-      catch (e) { console.error('Gagal simpan antrian:', e); return false; }
-    }
-
-    function removeFromQueue(id) {
-      setQueue(getQueue().filter(item => item.id !== id));
-    }
-
-    function bumpAttempts(id) {
-      setQueue(getQueue().map(item =>
-        item.id === id ? Object.assign({}, item, { attempts: (item.attempts || 0) + 1 }) : item
-      ));
-    }
-
-    function isInQueue(id) {
-      return getQueue().some(item => item.id === id);
-    }
-
-    // Fungsi update state internal berjalan normal di background, tanpa merubah CSS elemen yang tersembunyi
-    function showPill(state, text) {
-      if (suppressPill) return;
-      clearTimeout(pillTimer);
-      if (syncText) syncText.textContent = text;
-      if (syncDot) {
-        syncDot.className = 'w-2 h-2 rounded-full shrink-0 ' +
-          (state === 'ok' ? 'bg-emerald-600' : state === 'warn' ? 'bg-red-500' : 'bg-amber-500 animate-pulse');
-      }
-    }
-
-    function hidePill() {
-      clearTimeout(pillTimer);
-    }
-
-    async function kirim(item) {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 60000);
-      try {
-        const res = await fetch(GOOGLE_SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(item),
-          signal: controller.signal
-        });
-        const json = await res.json();
-        if (json.result === 'success' || json.result === 'duplicate') return json.result;
-        throw new Error(json.error || 'Server menolak data');
-      } finally {
-        clearTimeout(timeout);
-      }
-    }
-
-    async function flushQueue() {
-      if (flushing) return;
-      if (getQueue().length === 0) return;
-      flushing = true;
-      const failedNrps = new Set();
-      let gagal = false;
-
-      try {
-        while (true) {
-          const item = getQueue().find(it =>
-            !failedNrps.has(it.nrp) && (it.attempts || 0) < MAX_ATTEMPTS
-          );
-          if (!item) break;
-
-          showPill('sending', 'Menyimpan data ke server...');
-          try {
-            await kirim(item);
-            removeFromQueue(item.id);
-          } catch (err) {
-            console.warn('Kirim gagal, akan dicoba lagi:', err);
-            gagal = true;
-            if (err && (err.name === 'TypeError' || err.name === 'AbortError')) {
-              break; 
-            }
-            bumpAttempts(item.id);
-            failedNrps.add(item.nrp);
-          }
-        }
-      } finally {
-        flushing = false;
-      }
-
-      const sisa = getQueue().length;
-      if (sisa > 0 && gagal) {
-        showPill('warn', sisa + ' data belum terkirim, mencoba lagi...');
-      } else if (sisa === 0) {
-        showPill('ok', 'Data tersimpan di server');
-      }
-    }
-
-    window.addEventListener('online', flushQueue);
-    window.addEventListener('load', flushQueue);
-    setInterval(() => { if (getQueue().length > 0) flushQueue(); }, 15000);
-
-    window.addEventListener('beforeunload', function(e) {
-      if (getQueue().length > 0 || pretestActive) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    });
-
-    function waitUntil(conditionFn, timeoutMs) {
-      return new Promise(resolve => {
-        const start = Date.now();
-        (function tick() {
-          if (conditionFn()) return resolve(true);
-          if (Date.now() - start >= timeoutMs) return resolve(false);
-          setTimeout(tick, 250);
-        })();
-      });
-    }
-
-    // ==========================================
     // STEP 1 LOGIC
-    // ==========================================
     nrpInput.addEventListener('input', function(e) {
       lookupNrp(e.target.value.trim());
     });
@@ -600,9 +455,7 @@
       }
     }
 
-    // ==========================================
     // STEP 2 LOGIC (KAMERA)
-    // ==========================================
     btnToCamera.addEventListener('click', function() {
       if (!activeStudent) return;
       
@@ -632,10 +485,6 @@
       cameraStatusText.textContent = "Mengakses kamera depan...";
 
       try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          throw new Error('getUserMedia tidak didukung (pastikan halaman dibuka lewat HTTPS)');
-        }
-
         const constraints = {
           video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 640 } },
           audio: false
@@ -651,7 +500,7 @@
       } catch (err) {
         console.warn("Kamera gagal:", err);
         cameraSpinner.classList.add('hidden');
-        cameraStatusText.textContent = "Kamera tidak bisa diakses. Izinkan akses kamera di browser, lalu coba lagi.";
+        cameraStatusText.textContent = "Kamera tidak bisa diakses. Izinkan akses kamera di browser.";
         btnRetryCamera.classList.remove('hidden');
       }
     }
@@ -715,44 +564,32 @@
     }
 
     // ==========================================
-    // SUBMIT FOTO -> upload diam-diam, langsung ke PRE-TEST
+    // EKSKUSI STREAMLINED: SUBMIT -> KIRIM DITEMPAT (BACKGROUND) -> TAMPILKAN PRE-TEST
     // ==========================================
     btnSubmitAttendance.addEventListener('click', function() {
       if (!activeStudent || !compressedPhotoBase64) return;
-      if (btnSubmitAttendance.disabled) return;
-      btnSubmitAttendance.disabled = true;
 
       const now = new Date();
       presensiTimeString = now.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
 
-      currentPresensiId = Date.now() + '-' + Math.random().toString(36).slice(2, 8);
       const payload = {
-        id: currentPresensiId,
-        type: 'presensi',
         nrp: activeStudent.nrp,
         nama: activeStudent.name,
         fotoBase64: compressedPhotoBase64,
         timestamp: now.toISOString(),
-        event: EVENT_NAME,
-        attempts: 0
+        event: EVENT_NAME
       };
 
-      if (!setQueue([...getQueue(), payload])) {
-        btnSubmitAttendance.disabled = false;
-        alert('Penyimpanan perangkat bermasalah. Coba lagi, atau matikan mode private browsing.');
-        return;
-      }
+      // Tembak request upload ke Google Script secara asynchronous
+      uploadPromise = fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      }).catch(err => console.error("Upload error:", err));
 
       stopCamera();
-
-      // Upload tetap jalan full di background
-      suppressPill = true;
-      hidePill();
-      flushQueue();
-
       step2Section.classList.add('hidden');
       startPretest();
-      btnSubmitAttendance.disabled = false;
     });
 
     // ==========================================
@@ -762,7 +599,6 @@
       pretestIndex = 0;
       pretestAnswers = [];
       pretestSelected = null;
-      pretestActive = true;
       pretestSection.classList.remove('hidden');
       renderPretestQuestion();
     }
@@ -819,46 +655,29 @@
 
     async function finishPretest() {
       btnPretestNext.disabled = true;
-
-      setQueue([...getQueue(), {
-        id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
-        type: 'pretest',
-        nrp: activeStudent.nrp,
-        nama: activeStudent.name,
-        jawaban: pretestAnswers.slice(),
-        timestamp: new Date().toISOString(),
-        attempts: 0
-      }]);
-
-      pretestActive = false;
       pretestSection.classList.add('hidden');
       step3Section.classList.remove('hidden');
-      offlineNote.classList.add('hidden');
 
-      let confirmed = !isInQueue(currentPresensiId);
-      if (!confirmed) {
-        successState.classList.add('hidden');
-        submittingState.classList.remove('hidden');
-        flushQueue();
-        confirmed = await waitUntil(() => !isInQueue(currentPresensiId), 20000);
+      // Tampilkan spinner hanya bila proses upload background belum selesai sepenuhnya
+      submittingState.classList.remove('hidden');
+      successState.classList.add('hidden');
+
+      if (uploadPromise) {
+        await uploadPromise;
       }
 
       receiptName.textContent = activeStudent.name;
       receiptNrp.textContent = activeStudent.nrp;
       receiptTimestamp.textContent = presensiTimeString + ' WIB';
-      if (!confirmed) offlineNote.classList.remove('hidden');
 
       submittingState.classList.add('hidden');
       successState.classList.remove('hidden');
-
-      suppressPill = false;
-      flushQueue();
     }
 
     btnNewAttendance.addEventListener('click', function() {
       activeStudent = null;
       compressedPhotoBase64 = null;
-      currentPresensiId = null;
+      uploadPromise = null;
       pretestAnswers = [];
       nrpInput.value = '';
       lookupNrp('');
