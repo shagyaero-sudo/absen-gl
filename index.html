@@ -29,7 +29,7 @@
     body {
       font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
       -webkit-font-smoothing: antialiased;
-      background-image: url('/public/backround.svg');
+      background-image: url('/public/images.jpg');
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
@@ -84,8 +84,7 @@
     <!-- ========================================== -->
     <section id="step1Section" class="glass-card rounded-3xl p-6 transition-all duration-300">
       <div class="mb-4">
-        <h3 class="text-base font-bold text-slate-900">Masukkan NRP / NIM</h3>
-        <p class="text-xs text-slate-600 mt-1">Sistem otomatis mendeteksi nama Anda dari Master Data Terravana.</p>
+        <h3 class="text-base font-bold text-slate-900">Masukkan NRP</h3>
       </div>
 
       <!-- Input Field -->
@@ -95,7 +94,7 @@
           id="nrpInput" 
           inputmode="numeric"
           maxlength="10"
-          placeholder="Contoh: 5033251001"
+          placeholder="Contoh: 5033251XXX"
           autocomplete="off"
           class="glass-input w-full h-12 px-4 py-3 rounded-2xl text-base font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-900 transition-all tracking-wider"
         >
@@ -103,8 +102,7 @@
 
       <!-- Hint & Sample -->
       <div id="searchHint" class="text-[11px] text-slate-500 mb-4 flex items-center justify-between">
-        <span>Ketik 10 digit NRP ITS</span>
-        <button type="button" id="btnRandomSample" class="text-slate-800 hover:text-slate-9800 font-semibold underline">Contoh NRP</button>
+        <span>Ketik NRP Lengkap</span>
       </div>
 
       <!-- DETECTED STUDENT BADGE (EXPANDED DYNAMICALLY) -->
@@ -116,9 +114,9 @@
             </svg>
           </div>
           <div class="flex-grow min-w-0">
-            <span class="text-[10px] font-bold text-emerald-900 tracking-wider uppercase">Nama Terdeteksi</span>
+            <span class="text-[10px] font-bold text-emerald-900 tracking-wider uppercase">Nama Mahasiswa:</span>
             <h4 id="detectedName" class="text-sm font-bold text-slate-900 truncate">Nama Mahasiswa</h4>
-            <p id="detectedMeta" class="text-xs text-emerald-900/80 mt-0.5">NRP: 5033251001 · Terverifikasi</p>
+            <p id="detectedMeta" class="text-xs text-emerald-900/80 mt-0.5">NRP: 5033251001</p>
           </div>
         </div>
       </div>
@@ -129,7 +127,7 @@
           <svg class="w-4 h-4 text-amber-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
-          <span>NRP tidak ditemukan di daftar Terravana. Silakan cek kembali.</span>
+          <span>NRP tidak ditemukan. Silakan cek kembali.</span>
         </div>
       </div>
 
@@ -140,7 +138,7 @@
           disabled
           class="w-full h-12 rounded-2xl bg-slate-900/10 text-slate-400 font-semibold text-sm flex items-center justify-center gap-2 cursor-not-allowed transition-all duration-200 active:scale-[0.98]"
         >
-          <span>Lanjut ke Kamera</span>
+          <span>Lanjutkan</span>
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
           </svg>
@@ -155,18 +153,17 @@
       <div>
         <div class="flex items-center justify-between mb-3">
           <div>
-            <h3 class="text-base font-bold text-slate-900">Verifikasi Wajah / Selfie</h3>
-            <p class="text-xs text-slate-600">Posisikan wajah Anda di dalam lingkaran.</p>
+            <h3 class="text-base font-bold text-slate-900">Verifikasi</h3>
+            <p class="text-xs text-slate-600">Foto Bukti Kehadiran</p>
           </div>
           <button type="button" id="btnBackToStep1" class="text-xs text-slate-700 hover:text-slate-950 font-semibold px-2 py-1 bg-white/40 rounded-lg">
-            Ubah NRP
+            Batal
           </button>
         </div>
 
         <!-- Student Mini Profile Tag -->
         <div class="bg-white/40 border border-white/60 rounded-xl px-3 py-2 flex items-center justify-between mb-4">
           <div class="truncate mr-2">
-            <span class="text-[10px] text-slate-500 uppercase tracking-wider block font-semibold">Peserta</span>
             <span id="cameraStepStudentName" class="text-xs font-bold text-slate-900 truncate block">-</span>
           </div>
           <span id="cameraStepStudentNrp" class="text-xs font-mono font-bold text-slate-800 bg-white/60 border border-white/80 px-2 py-0.5 rounded-lg">
@@ -197,7 +194,7 @@
         </div>
 
         <p class="text-center text-[11px] text-slate-600 mt-2 font-medium">
-          Kamera depan aktif · Foto verifikasi presensi
+          Pastikan Wajahmu masuk di dalam lingkaran.
         </p>
       </div>
 
@@ -213,7 +210,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <span>Jepret Foto</span>
+            <span>Ambil Foto</span>
           </button>
         </div>
 
@@ -249,7 +246,7 @@
         </div>
         <h3 class="text-base font-bold text-slate-900 mb-1">Mencatat Presensi...</h3>
         <p class="text-xs text-slate-600 max-w-xs">
-          Mengirim data kehadiran ke Google Sheets.
+          Memverifikasi Kehadiranmu...
         </p>
       </div>
 
@@ -263,7 +260,7 @@
 
         <h3 class="text-lg font-bold text-slate-900 tracking-tight mb-1">Presensi Berhasil!</h3>
         <p class="text-xs text-slate-600 mb-5">
-          Selamat mengikuti seminar. Kehadiran Anda telah dicatat.
+          Kehadiranmu telah dicatat
         </p>
 
         <div class="w-full bg-white/40 border border-white/60 rounded-2xl p-4 text-left mb-5 text-xs space-y-2">
@@ -272,7 +269,7 @@
             <span id="receiptName" class="font-bold text-slate-900">-</span>
           </div>
           <div class="flex justify-between items-center pb-2 border-b border-slate-900/10">
-            <span class="text-slate-500 font-medium">NRP / NIM</span>
+            <span class="text-slate-500 font-medium">NRP</span>
             <span id="receiptNrp" class="font-mono font-bold text-slate-900">-</span>
           </div>
           <div class="flex justify-between items-center pb-2 border-b border-slate-900/10">
@@ -283,7 +280,7 @@
             <span class="text-slate-500 font-medium">Status</span>
             <span class="text-emerald-800 font-bold inline-flex items-center gap-1">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-              Tersimpan
+              Tercatat
             </span>
           </div>
         </div>
@@ -293,7 +290,7 @@
           id="btnNewAttendance" 
           class="w-full h-12 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
         >
-          <span>Presensi Mahasiswa Berikutnya</span>
+          <span>Selesai</span>
         </button>
       </div>
 
