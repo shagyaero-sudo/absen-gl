@@ -57,9 +57,6 @@
     <div class="glass-card rounded-3xl p-5 transition-all duration-300">
       <div class="flex items-center justify-between text-xs font-semibold text-slate-700/80 mb-2">
         <span>Rabu, 15 Okt 2025</span>
-        <span class="bg-emerald-500/20 text-emerald-800 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px] font-bold">
-          Presensi Terbuka
-        </span>
       </div>
       <h2 class="text-lg font-bold text-slate-900 leading-snug tracking-tight mb-2">
         AI & Autonomous Systems in Industry 4.0
@@ -91,7 +88,7 @@
           id="nrpInput" 
           inputmode="numeric"
           maxlength="10"
-          placeholder="Contoh: 5033251XXX"
+          placeholder="Ketik NRP..."
           autocomplete="off"
           class="glass-input w-full h-12 px-4 py-3 rounded-2xl text-base font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-900 transition-all tracking-wider"
         >
@@ -99,7 +96,7 @@
 
       <!-- Hint & Sample -->
       <div id="searchHint" class="text-[11px] text-slate-500 mb-4 flex items-center justify-between">
-        <span>Ketik NRP Lengkap</span>
+        <span>Contoh: 5033251xxx</span>
       </div>
 
       <!-- DETECTED STUDENT BADGE (EXPANDED DYNAMICALLY) -->
@@ -111,7 +108,6 @@
             </svg>
           </div>
           <div class="flex-grow min-w-0">
-            <span class="text-[10px] font-bold text-emerald-900 tracking-wider uppercase">Nama Mahasiswa:</span>
             <h4 id="detectedName" class="text-sm font-bold text-slate-900 truncate">Nama Mahasiswa</h4>
             <p id="detectedMeta" class="text-xs text-emerald-900/80 mt-0.5">NRP: 5033251001</p>
           </div>
@@ -191,7 +187,7 @@
         </div>
 
         <p class="text-center text-[11px] text-slate-600 mt-2 font-medium">
-          Pastikan Wajahmu masuk di dalam lingkaran.
+          Pastikan wajahmu masuk di dalam lingkaran!
         </p>
       </div>
 
@@ -217,7 +213,7 @@
             id="btnRetakePhoto" 
             class="flex-1 h-12 rounded-2xl bg-white/60 hover:bg-white/80 text-slate-800 font-semibold text-sm flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all"
           >
-            <span>Foto Ulang</span>
+            <span>Ulangi</span>
           </button>
 
           <button 
@@ -270,14 +266,14 @@
             <span id="receiptNrp" class="font-mono font-bold text-slate-900">-</span>
           </div>
           <div class="flex justify-between items-center pb-2 border-b border-slate-900/10">
-            <span class="text-slate-500 font-medium">Waktu Presensi</span>
+            <span class="text-slate-500 font-medium">Waktu</span>
             <span id="receiptTimestamp" class="text-slate-900 font-semibold">-</span>
           </div>
           <div class="flex justify-between items-center">
             <span class="text-slate-500 font-medium">Status</span>
             <span class="text-emerald-800 font-bold inline-flex items-center gap-1">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-              Tercatat
+              Hadir
             </span>
           </div>
         </div>
