@@ -29,11 +29,8 @@
     body {
       font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
       -webkit-font-smoothing: antialiased;
-      background-image: url('public/images.jpg');
-      background-size: cover;
-      background-position: center;
+      background-image: linear-gradient(to top, #a18cd1 0%, #fbc2eb 100%);
       background-attachment: fixed;
-      background-repeat: no-repeat;
     }
     .glass-card {
       background: rgba(255, 255, 255, 0.45);
@@ -316,7 +313,6 @@
     const detectedName = document.getElementById('detectedName');
     const detectedMeta = document.getElementById('detectedMeta');
     const btnToCamera = document.getElementById('btnToCamera');
-    const btnRandomSample = document.getElementById('btnRandomSample');
 
     const step1Section = document.getElementById('step1Section');
     const step2Section = document.getElementById('step2Section');
@@ -351,13 +347,6 @@
       lookupNrp(query);
     });
 
-    btnRandomSample.addEventListener('click', function() {
-      const keys = Object.keys(masterData);
-      const randomKey = keys[Math.floor(Math.random() * keys.length)];
-      nrpInput.value = randomKey;
-      lookupNrp(randomKey);
-    });
-
     function lookupNrp(query) {
       // 1. Jika NRP cocok (langsung deteksi)
       if (masterData[query]) {
@@ -365,12 +354,14 @@
         activeStudent = { nrp: query, name: studentName };
 
         detectedName.textContent = studentName;
-        detectedMeta.textContent = 'NRP: ' + query + ' · Terverifikasi';
+        detectedMeta.textContent = 'NRP: ' + query;
         detectedCard.classList.remove('hidden');
         notFoundCard.classList.add('hidden');
 
+        // Aktifkan tombol
         btnToCamera.disabled = false;
-        btnToCamera.className = "w-full h-12 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all duration-200 cursor-pointer";
+        btnToCamera.classList.remove('bg-slate-900/10', 'text-slate-400', 'cursor-not-allowed');
+        btnToCamera.classList.add('bg-slate-900', 'hover:bg-slate-800', 'text-white', 'shadow-lg', 'cursor-pointer');
         return;
       }
 
@@ -378,9 +369,10 @@
       activeStudent = null;
       detectedCard.classList.add('hidden');
       btnToCamera.disabled = true;
-      btnToCamera.className = "w-full h-12 rounded-2xl bg-slate-900/10 text-slate-400 font-semibold text-sm flex items-center justify-center gap-2 cursor-not-allowed transition-all duration-200";
+      btnToCamera.classList.remove('bg-slate-900', 'hover:bg-slate-800', 'text-white', 'shadow-lg', 'cursor-pointer');
+      btnToCamera.classList.add('bg-slate-900/10', 'text-slate-400', 'cursor-not-allowed');
 
-      // 2. Hanya tampilkan NOT FOUND jika sudah mengetik persis 10 DIGITS (format ITS)
+      // 2. Tampilkan NOT FOUND hanya jika 10 digit penuh
       if (query.length === 10) {
         notFoundCard.classList.remove('hidden');
       } else {
