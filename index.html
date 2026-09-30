@@ -130,11 +130,12 @@
         </div>
       </div>
 
-      <div class="pt-2">
+      <!-- BUTTON HANYA MUNCUL KETIKA NRP TER-VERIFIED -->
+      <div id="actionContainer" class="pt-2">
         <button 
           id="btnToCamera" 
           disabled
-          class="w-full h-12 rounded-2xl bg-slate-900/10 text-slate-400 font-semibold text-sm flex items-center justify-center gap-2 cursor-not-allowed transition-all duration-200 active:scale-[0.98]"
+          class="hidden w-full h-12 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg transition-all duration-300 active:scale-[0.98] cursor-pointer"
         >
           <span>Lanjutkan</span>
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -426,17 +427,18 @@
         detectedCard.classList.remove('hidden');
         notFoundCard.classList.add('hidden');
 
+        // MUNCULKAN TOMBOL DAN AKTIFKAN
         btnToCamera.disabled = false;
-        btnToCamera.classList.remove('bg-slate-900/10', 'text-slate-400', 'cursor-not-allowed');
-        btnToCamera.classList.add('bg-slate-900', 'hover:bg-slate-800', 'text-white', 'shadow-lg', 'cursor-pointer');
+        btnToCamera.classList.remove('hidden');
         return;
       }
 
       activeStudent = null;
       detectedCard.classList.add('hidden');
+      
+      // SEMBUNYIKAN TOMBOL KETIKA KOSONG / TIDAK DITEMUKAN
       btnToCamera.disabled = true;
-      btnToCamera.classList.remove('bg-slate-900', 'hover:bg-slate-800', 'text-white', 'shadow-lg', 'cursor-pointer');
-      btnToCamera.classList.add('bg-slate-900/10', 'text-slate-400', 'cursor-not-allowed');
+      btnToCamera.classList.add('hidden');
 
       if (query.length === 10) {
         notFoundCard.classList.remove('hidden');
